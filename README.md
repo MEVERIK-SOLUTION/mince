@@ -13,6 +13,8 @@ Webová aplikace pro evidenci a správu numismatické sbírky mincí.
 
 ## 🚀 Rychlý start – Deploy na Vercel + Supabase
 
+> **Automatický deploy** – po nastavení kroků 1–3 se každý push do větve `main` automaticky nasadí na Vercel přes GitHub Actions (`.github/workflows/deploy.yml`).
+
 ### 1. Vytvořte Supabase projekt
 
 1. Jděte na [supabase.com](https://supabase.com) a přihlaste se / vytvořte účet
@@ -29,7 +31,35 @@ Webová aplikace pro evidenci a správu numismatické sbírky mincí.
 
 ### 2. Deploy na Vercel
 
-#### Metoda A – přes Vercel dashboard (doporučeno)
+#### Metoda A – automaticky přes GitHub Actions (doporučeno)
+
+Workflow `.github/workflows/deploy.yml` automaticky nasadí aplikaci na Vercel při každém push do větve `main`.
+
+**Jednorázové nastavení:**
+
+1. Jděte na [vercel.com](https://vercel.com), přihlaste se a klikněte **New Project** → importujte repozitář `MEVERIK-SOLUTION/mince`
+2. **Root Directory**: nastavte na `frontend`, **Framework Preset**: Vite
+3. Přidejte **Environment Variables** ve Vercel dashboardu:
+   ```
+   VITE_SUPABASE_URL      = https://your-project-ref.supabase.co
+   VITE_SUPABASE_ANON_KEY = your-anon-key-here
+   ```
+4. Po prvním deploy zjistěte identifikátory projektu:
+   ```bash
+   cd frontend && vercel link
+   cat .vercel/project.json   # vypíše orgId a projectId
+   ```
+5. V GitHub repozitáři přidejte **Settings → Secrets and variables → Actions**:
+   | Secret | Hodnota |
+   |--------|---------|
+   | `VERCEL_TOKEN` | token z [vercel.com/account/tokens](https://vercel.com/account/tokens) |
+   | `VERCEL_ORG_ID` | `orgId` z kroku 4 |
+   | `VERCEL_PROJECT_ID` | `projectId` z kroku 4 |
+   | `VITE_SUPABASE_URL` | URL vašeho Supabase projektu |
+   | `VITE_SUPABASE_ANON_KEY` | anon klíč vašeho Supabase projektu |
+6. Push do `main` → workflow spustí lint, build a deploy automaticky 🎉
+
+#### Metoda B – ručně přes Vercel dashboard
 
 1. Jděte na [vercel.com](https://vercel.com) a přihlaste se GitHub účtem
 2. Klikněte **New Project** → importujte tento repozitář (`MEVERIK-SOLUTION/mince`)
@@ -42,7 +72,7 @@ Webová aplikace pro evidenci a správu numismatické sbírky mincí.
    ```
 6. Klikněte **Deploy** 🎉
 
-#### Metoda B – přes Vercel CLI
+#### Metoda C – přes Vercel CLI
 
 ```bash
 cd frontend
@@ -67,6 +97,9 @@ npm run dev
 
 ```
 mince/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml              # CI/CD – lint, build, deploy na Vercel
 ├── frontend/                   # React + Vite + TypeScript aplikace
 │   ├── src/
 │   │   ├── lib/supabase.ts     # Supabase klient
@@ -79,6 +112,7 @@ mince/
 │   └── package.json
 │
 ├── supabase/
+│   ├── config.toml                  # Supabase CLI konfigurace (lokální dev)
 │   └── migrations/
 │       └── 001_initial_schema.sql   # Databázové schéma
 │
