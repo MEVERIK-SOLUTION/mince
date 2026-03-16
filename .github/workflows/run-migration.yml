@@ -1,0 +1,61 @@
+name: 🗂️ Run Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      db_password:
+        description: 'Supabase database password'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  SUPABASE_DB_HOST: db.yjzsvyksjjrkupgxueua.supabase.co
+  SUPABASE_DB_PORT: 5432
+  SUPABASE_DB_NAME: postgres
+  SUPABASE_DB_USER: postgres
+
+jobs:
+  migrate:
+    name: Run SQL migration
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Run migration
+        env:
+          PGPASSWORD: ${{ inputs.db_password }}
+        run: |
+          echo "Connecting to Supabase database..."
+          psql -h "$SUPABASE_DB_HOST" \
+               -p "$SUPABASE_DB_PORT" \
+               -U "$SUPABASE_DB_USER" \
+               -d "$SUPABASE_DB_NAME" \
+               -f supabase/migrations/001_initial_schema.sql \
+               -v ON_ERROR_STOP=1
+          echo "✅ Migration completed successfully"
+
+      - name: Verify tables
+        env:
+          PGPASSWORD: ${{ inputs.db_password }}
+        run: |
+          echo "Verifying created tables..."
+          psql -h "$SUPABASE_DB_HOST" \
+               -p "$SUPABASE_DB_PORT" \
+               -U "$SUPABASE_DB_USER" \
+               -d "$SUPABASE_DB_NAME" \
+               -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;"
+          
+          echo ""
+          echo "Verifying sample data..."
+          psql -h "$SUPABASE_DB_HOST" \
+               -p "$SUPABASE_DB_PORT" \
+               -U "$SUPABASE_DB_USER" \
+               -d "$SUPABASE_DB_NAME" \
+               -c "SELECT COUNT(*) as coin_count FROM coins; SELECT COUNT(*) as collection_count FROM collections; SELECT COUNT(*) as image_count FROM coin_images;"
