@@ -1,7 +1,6 @@
 import React from 'react'
-import { Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import {
-  AppBar,
   Box,
   Container,
   Drawer,
@@ -11,12 +10,13 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Toolbar,
   Typography,
   useMediaQuery,
   useTheme,
+  alpha,
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
+import CloseIcon from '@mui/icons-material/Close'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import ViewListIcon from '@mui/icons-material/ViewList'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
@@ -29,62 +29,211 @@ import AddCoin from './pages/AddCoin'
 import EditCoin from './pages/EditCoin'
 import Collections from './pages/Collections'
 
-const DRAWER_WIDTH = 220
+const DRAWER_WIDTH = 240
 
 const navItems = [
-  { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
-  { label: 'Katalog mincí', path: '/coins', icon: <ViewListIcon /> },
-  { label: 'Přidat minci', path: '/coins/new', icon: <AddCircleIcon /> },
-  { label: 'Kolekce', path: '/collections', icon: <CollectionsBookmarkIcon /> },
+  { label: 'Dashboard', path: '/', icon: <DashboardIcon fontSize="small" /> },
+  { label: 'Katalog mincí', path: '/coins', icon: <ViewListIcon fontSize="small" /> },
+  { label: 'Přidat minci', path: '/coins/new', icon: <AddCircleIcon fontSize="small" /> },
+  { label: 'Kolekce', path: '/collections', icon: <CollectionsBookmarkIcon fontSize="small" /> },
 ]
 
 export default function App() {
   const theme = useTheme()
+  const location = useLocation()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [drawerOpen, setDrawerOpen] = React.useState(false)
 
   const drawerContent = (
-    <Box sx={{ width: DRAWER_WIDTH }}>
-      <Toolbar>
-        <Typography variant="h6" noWrap>🪙 Mince</Typography>
-      </Toolbar>
-      <List>
-        {navItems.map((item) => (
-          <ListItem key={item.path} disablePadding>
-            <ListItemButton
-              component={Link}
-              to={item.path}
-              onClick={() => setDrawerOpen(false)}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
-          </ListItem>
-        ))}
+    <Box
+      sx={{
+        width: DRAWER_WIDTH,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'linear-gradient(180deg, #0a1020 0%, #070b12 100%)',
+        borderRight: '1px solid rgba(255,255,255,0.06)',
+      }}
+    >
+      {/* Logo */}
+      <Box sx={{ px: 3, py: 3.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box
+          sx={{
+            width: 36,
+            height: 36,
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, #d4a847 0%, #e8c06a 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            boxShadow: '0 4px 12px rgba(212,168,71,0.4)',
+            flexShrink: 0,
+          }}
+        >
+          🪙
+        </Box>
+        <Box>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 700, color: '#e8eaf6', lineHeight: 1.1 }}
+          >
+            Mince
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(232,234,246,0.4)', fontSize: '0.65rem', letterSpacing: '0.05em' }}
+          >
+            Numismatický katalog
+          </Typography>
+        </Box>
+        {isMobile && (
+          <IconButton
+            onClick={() => setDrawerOpen(false)}
+            sx={{ ml: 'auto', color: 'rgba(232,234,246,0.5)', p: 0.5 }}
+            size="small"
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
+
+      {/* Nav label */}
+      <Typography
+        sx={{
+          px: 3,
+          mb: 1,
+          fontSize: '0.65rem',
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: 'rgba(232,234,246,0.3)',
+        }}
+      >
+        Navigace
+      </Typography>
+
+      {/* Nav items */}
+      <List sx={{ px: 1.5, flex: 1 }}>
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path ||
+            (item.path !== '/' && location.pathname.startsWith(item.path))
+          return (
+            <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                component={Link}
+                to={item.path}
+                onClick={() => setDrawerOpen(false)}
+                sx={{
+                  borderRadius: '10px',
+                  py: 1,
+                  px: 1.5,
+                  color: isActive ? '#d4a847' : 'rgba(232,234,246,0.65)',
+                  backgroundColor: isActive
+                    ? alpha('#d4a847', 0.1)
+                    : 'transparent',
+                  border: isActive
+                    ? '1px solid rgba(212,168,71,0.2)'
+                    : '1px solid transparent',
+                  '&:hover': {
+                    backgroundColor: isActive
+                      ? alpha('#d4a847', 0.14)
+                      : 'rgba(255,255,255,0.04)',
+                    color: isActive ? '#d4a847' : '#e8eaf6',
+                  },
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 32,
+                    color: 'inherit',
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontSize: '0.875rem',
+                    fontWeight: isActive ? 600 : 400,
+                  }}
+                />
+                {isActive && (
+                  <Box
+                    sx={{
+                      width: 4,
+                      height: 4,
+                      borderRadius: '50%',
+                      backgroundColor: '#d4a847',
+                      boxShadow: '0 0 6px #d4a847',
+                    }}
+                  />
+                )}
+              </ListItemButton>
+            </ListItem>
+          )
+        })}
       </List>
+
+      {/* Footer */}
+      <Box
+        sx={{
+          px: 3,
+          py: 2.5,
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'rgba(232,234,246,0.25)',
+            fontSize: '0.62rem',
+            display: 'block',
+          }}
+        >
+          © 2025 Meverik Studio®
+        </Typography>
+      </Box>
     </Box>
   )
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      {/* AppBar */}
-      <AppBar position="fixed" sx={{ zIndex: theme.zIndex.drawer + 1 }}>
-        <Toolbar>
-          {isMobile && (
-            <IconButton
-              color="inherit"
-              edge="start"
-              onClick={() => setDrawerOpen(true)}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            🪙 Mince – Numismatický katalog
-          </Typography>
-        </Toolbar>
-      </AppBar>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      {/* Mobile top bar */}
+      {isMobile && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1200,
+            height: 56,
+            display: 'flex',
+            alignItems: 'center',
+            px: 2,
+            gap: 1.5,
+            backgroundColor: 'rgba(7,11,18,0.92)',
+            backdropFilter: 'blur(16px)',
+            borderBottom: '1px solid rgba(255,255,255,0.07)',
+          }}
+        >
+          <IconButton
+            onClick={() => setDrawerOpen(true)}
+            sx={{ color: 'rgba(232,234,246,0.7)' }}
+            size="small"
+          >
+            <MenuIcon />
+          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography sx={{ fontSize: '1rem' }}>🪙</Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#e8eaf6' }}>
+              Mince
+            </Typography>
+          </Box>
+        </Box>
+      )}
 
       {/* Desktop sidebar */}
       {!isMobile && (
@@ -93,7 +242,12 @@ export default function App() {
           sx={{
             width: DRAWER_WIDTH,
             flexShrink: 0,
-            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box' },
+            '& .MuiDrawer-paper': {
+              width: DRAWER_WIDTH,
+              boxSizing: 'border-box',
+              border: 'none',
+              background: 'transparent',
+            },
           }}
         >
           {drawerContent}
@@ -106,6 +260,12 @@ export default function App() {
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           ModalProps={{ keepMounted: true }}
+          sx={{
+            '& .MuiDrawer-paper': {
+              border: 'none',
+              background: 'transparent',
+            },
+          }}
         >
           {drawerContent}
         </Drawer>
@@ -116,13 +276,15 @@ export default function App() {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          mt: 8,
+          pt: isMobile ? 9 : 4,
+          pb: 4,
+          px: { xs: 2, sm: 3, md: 4 },
           minHeight: '100vh',
-          backgroundColor: 'grey.50',
+          maxWidth: '100%',
+          overflow: 'hidden',
         }}
       >
-        <Container maxWidth="xl">
+        <Container maxWidth="xl" disableGutters>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/coins" element={<CoinList />} />

@@ -1,5 +1,7 @@
 # 🪙 Mince – Numismatický katalog
 
+> **© 2025 Meverik Studio®. Všechna práva vyhrazena.**
+
 Webová aplikace pro evidenci a správu numismatické sbírky mincí.
 
 ## ✨ Funkce
@@ -10,40 +12,71 @@ Webová aplikace pro evidenci a správu numismatické sbírky mincí.
 - 📊 **Dashboard** – statistiky sbírky (počet, hodnota, zastoupení zemí)
 - 📁 **Kolekce** – organizace mincí do vlastních kolekcí
 - 🌐 **Cloud databáze** – Supabase (PostgreSQL) pro sdílení sbírky
+- 🎨 **Dark UI** – prémiové tmavé glassmorphism rozhraní ve zlaté a fialové barvě
+
+## 📁 Struktura projektu
+
+```
+mince/
+├── .github/
+│   └── workflows/
+│       ├── deploy.yml              # CI/CD – lint, build, deploy na Vercel
+│       ├── setup.yml               # Jednorázový setup Supabase + Vercel env vars
+│       └── manual-deploy.yml       # Manuální redeploy
+│
+├── frontend/                       # ← AKTIVNÍ ZDROJOVÝ KÓD (React + Vite + TypeScript)
+│   ├── src/
+│   │   ├── main.tsx                # Entry point + MUI dark téma
+│   │   ├── App.tsx                 # Root layout, tmavý sidebar
+│   │   ├── lib/supabase.ts         # Supabase klient
+│   │   ├── services/               # Databázové operace
+│   │   ├── pages/                  # Stránky aplikace
+│   │   ├── components/             # Sdílené komponenty
+│   │   └── types/                  # TypeScript typy
+│   ├── .env.example                # Příklad proměnných prostředí
+│   └── package.json
+│
+├── supabase/
+│   ├── config.toml                  # Supabase CLI konfigurace
+│   └── migrations/
+│       └── 001_initial_schema.sql   # Databázové schéma
+│
+├── docs/                            # Referenční dokumentace a poznámky
+├── _archive/                        # Starší vývojové iterace (read-only)
+│
+├── AGENT_HANDOFF.md                 # Protokol pro předání VS Code agentovi
+├── .cursorrules                     # Instrukce pro AI agenty (Cursor, Copilot)
+├── vercel.json                      # Konfigurace Vercel (root)
+└── README.md
+```
 
 ## 🚀 Rychlý start – Deploy na Vercel + Supabase
 
-> **Projekt je již napojen** – Vercel projekt `prj_L3L3snANzop6ea36cGlhq0ZcF0MP` je připojen k tomuto repozitáři a nasazuje větev `main` automaticky.
-> Supabase projekt `yjzsvyksjjrkupgxueua` je vytvořen. Zbývá pouze jednou nastavit 3 GitHub secrets a spustit setup workflow.
+> **Projekt je již napojen** – Vercel projekt `prj_L3L3snANzop6ea36cGlhq0ZcF0MP` je připojen k tomuto repozitáři.
+> Supabase projekt `yjzsvyksjjrkupgxueua` je vytvořen.
 
-### Jednorázové nastavení (5 minut)
+### Jednorázové nastavení
 
 #### Krok 1 – Nastavte GitHub secrets
 
-Jděte na **GitHub → Settings → Secrets and variables → Actions → New repository secret** a přidejte:
-
-| Secret | Co to je | Kde to najít |
-|--------|----------|--------------|
-| `VERCEL_TOKEN` | Vercel přístupový token | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
-| `VERCEL_ORG_ID` | Vercel team/user ID *(volitelné – automaticky zjištěno z API)* | Vercel → Settings → General → Team ID |
-| `SUPABASE_ACCESS_TOKEN` | Supabase Management API klíč | Supabase → Account → Access tokens |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public JWT klíč | Supabase → Project → Settings → API → `anon public` |
-
-> `VITE_SUPABASE_URL` je veřejná hodnota a je v workflow již nastavena.
+| Secret | Popis |
+|--------|-------|
+| `VERCEL_TOKEN` | Vercel přístupový token |
+| `SUPABASE_ACCESS_TOKEN` | Supabase Management API klíč |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public JWT klíč |
 
 #### Krok 2 – Spusťte setup workflow
 
-1. Jděte na **GitHub → Actions → 🔧 One-time Setup (Supabase + Vercel)**
-2. Klikněte **Run workflow** → **Run workflow**
-3. Workflow automaticky:
-   - ✅ Spustí databázovou migraci (vytvoří všechny tabulky)
-   - ✅ Vytvoří Storage bucket `coin-images`
-   - ✅ Nastaví `VITE_SUPABASE_URL` a `VITE_SUPABASE_ANON_KEY` v Vercel projektu
-   - ✅ Spustí produkční redeploy na Vercel
+**GitHub → Actions → 🔧 One-time Setup → Run workflow**
+
+Workflow automaticky:
+- ✅ Spustí databázovou migraci
+- ✅ Nastaví env vars v Vercel projektu
+- ✅ Spustí produkční redeploy
 
 #### Krok 3 – Hotovo!
 
-Aplikace je dostupná na: **https://mince-git-main-meveriks-projects.vercel.app**
+Aplikace: **https://mince-git-main-meveriks-projects.vercel.app**
 
 ---
 
@@ -53,93 +86,32 @@ Aplikace je dostupná na: **https://mince-git-main-meveriks-projects.vercel.app*
 cd frontend
 npm install
 cp .env.example .env
-# Editujte .env a doplňte Supabase klíče
+# Doplňte Supabase klíče do .env
 npm run dev
-# Aplikace běží na http://localhost:3000
-```
-
-### Automatické nasazení (CI/CD)
-
-Workflow `.github/workflows/deploy.yml` se spustí při každém push do `main`:
-- **Build & Lint** – ověří kód (běží vždy, i na PR)
-- **Deploy** – nasadí na Vercel (jen push do `main`, vyžaduje secret `VERCEL_TOKEN`; `VERCEL_ORG_ID` je volitelný – pokud není nastaven, zjistí se automaticky přes Vercel API)
-
-Vercel také nasazuje automaticky přes GitHub integraci nezávisle na GitHub Actions.
-
-## 📁 Struktura projektu
-
-```
-mince/
-├── .github/
-│   └── workflows/
-│       ├── deploy.yml              # CI/CD – lint, build, deploy na Vercel
-│       └── setup.yml               # Jednorázový setup Supabase + Vercel env vars
-├── frontend/                   # React + Vite + TypeScript aplikace
-│   ├── src/
-│   │   ├── lib/supabase.ts     # Supabase klient
-│   │   ├── services/           # Databázové operace
-│   │   ├── pages/              # Stránky aplikace
-│   │   ├── components/         # Sdílené komponenty
-│   │   └── types/              # TypeScript typy
-│   ├── .env.example            # Příklad proměnných prostředí
-│   ├── vercel.json             # Konfigurace Vercel
-│   └── package.json
-│
-├── supabase/
-│   ├── config.toml                  # Supabase CLI konfigurace (lokální dev)
-│   └── migrations/
-│       └── 001_initial_schema.sql   # Databázové schéma
-│
-├── vercel.json                 # Konfigurace Vercel (root)
-│
-└── (vývojové fáze – Běhy 1–7)
-    ├── coin-collection-app-run1/
-    ├── coin-collection-app-run2/
-    ├── coin-collection-app-run3/
-    ├── coin-collection-app-beh4/
-    ├── coin-collection-app-beh5/
-    ├── fortent-beh6/
-    └── backend-beh7/
 ```
 
 ## 🛠 Technologický stack
 
 | Vrstva | Technologie |
 |--------|-------------|
-| Frontend | React 18 + TypeScript + Vite |
-| UI | Material UI (MUI) v5 |
-| Stavový management | TanStack React Query |
-| Formuláře | React Hook Form |
+| Frontend | React 18 + TypeScript + Vite 5 |
+| UI | Material UI (MUI) v5, dark glassmorphism |
+| Stavový management | TanStack React Query v5 |
+| Formuláře | React Hook Form v7 |
 | Databáze | Supabase (PostgreSQL) |
 | Úložiště souborů | Supabase Storage |
 | Deployment | Vercel |
 
-## 📖 Databázové tabulky
+## 🤖 Pro AI agenty
 
-| Tabulka | Popis |
-|---------|-------|
-| `coins` | Katalog mincí se všemi detaily |
-| `coin_images` | Fotografie přiřazené ke mincím |
-| `collections` | Osobní kolekce |
-| `collection_coins` | Vazba mince–kolekce |
-| `price_history` | Historie cen mince |
+Viz **[AGENT_HANDOFF.md](./AGENT_HANDOFF.md)** pro kompletní předávací protokol včetně:
+- Tech stacku a struktura souborů
+- Cloud services (Supabase + Vercel) s IDs a URLs
+- Schématu databáze
+- Stavu implementace
+- Doporučených dalších kroků
+- MCP integrací pro VS Code
 
-## 🔧 Vývoj
+---
 
-```bash
-# Instalace závislostí
-cd frontend && npm install
-
-# Spuštění dev serveru
-npm run dev
-
-# Build pro produkci
-npm run build
-
-# Kontrola kódu
-npm run lint
-```
-
-## 📄 Licence
-
-Projekt vytvořen pro soukromé účely evidence numismatické sbírky.
+*© 2025 Meverik Studio®*
