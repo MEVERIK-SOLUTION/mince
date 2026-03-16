@@ -36,7 +36,6 @@ jobs:
   deploy:
     name: Deploy to Vercel (${{ inputs.environment || 'production' }})
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || 'production' }}
 
     steps:
       - uses: actions/checkout@v4
