@@ -45,14 +45,18 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
   # ─── Deploy to Vercel (main branch only) ──────────────────────
-  # Note: Vercel's native GitHub integration also deploys on push to main.
-  # This job provides explicit CI-controlled deployment and requires
-  # VERCEL_TOKEN to be set as a GitHub repository secret.
+  # Required GitHub repository secrets:
+  #   VERCEL_TOKEN    – Vercel access token (vercel.com/account/tokens)
+  #   VERCEL_ORG_ID   – Vercel team/user ID (optional: resolved automatically
+  #                     from the API if not set, but setting it directly is faster)
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_PROJECT_ID: prj_L3L3snANzop6ea36cGlhq0ZcF0MP
 
     steps:
       - uses: actions/checkout@v4
@@ -64,38 +68,40 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Resolve Vercel team (org) ID
-        id: vercel-team
+      - name: Resolve Vercel org ID
+        id: vercel-org
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID_SECRET: ${{ secrets.VERCEL_ORG_ID }}
         run: |
-          TEAM_ID=$(curl -s \
-            -H "Authorization: Bearer $VERCEL_TOKEN" \
-            "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}" \
-            | jq -r '.accountId // empty')
-          echo "team_id=$TEAM_ID" >> "$GITHUB_OUTPUT"
-          echo "Vercel team ID: $TEAM_ID"
+          if [ -n "$VERCEL_ORG_ID_SECRET" ]; then
+            echo "org_id=$VERCEL_ORG_ID_SECRET" >> "$GITHUB_OUTPUT"
+            echo "Using VERCEL_ORG_ID from secret"
+          else
+            ORG_ID=$(curl -s \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}" \
+              | jq -r '.accountId // empty')
+            echo "org_id=$ORG_ID" >> "$GITHUB_OUTPUT"
+            echo "Resolved Vercel org ID: $ORG_ID"
+          fi
 
       - name: Install Vercel CLI
-        run: npm install --global vercel@50
+        run: npm install --global vercel@latest
 
       - name: Pull Vercel environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: frontend
         env:
-          VERCEL_ORG_ID: ${{ steps.vercel-team.outputs.team_id }}
-          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ steps.vercel-org.outputs.org_id }}
+        working-directory: frontend
+        run: vercel pull --yes --environment=production
 
       - name: Build for Vercel
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: frontend
         env:
-          VERCEL_ORG_ID: ${{ steps.vercel-team.outputs.team_id }}
-          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ steps.vercel-org.outputs.org_id }}
+        working-directory: frontend
+        run: vercel build --prod
 
       - name: Deploy to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: frontend
         env:
-          VERCEL_ORG_ID: ${{ steps.vercel-team.outputs.team_id }}
-          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ steps.vercel-org.outputs.org_id }}
+        working-directory: frontend
+        run: vercel deploy --prebuilt --prod
