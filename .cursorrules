@@ -1,0 +1,59 @@
+# Mince – AI Agent Rules
+# Copyright © 2025 Meverik Studio®
+
+## Project Overview
+Czech-language numismatic coin collection web app.
+Stack: React 18 + TypeScript + Vite + MUI v5 + Supabase + Vercel.
+
+## Key Conventions
+
+### Language
+- UI text, comments, and variable names are in Czech
+- Code logic identifiers (functions, types) use English
+- Error messages may be in Czech for end users
+
+### File Structure
+- Active source: `frontend/src/`
+- Do NOT touch `_archive/` — historical only
+- Services go in `frontend/src/services/coinService.ts`
+- Types go in `frontend/src/types/coin.ts`
+- Pages go in `frontend/src/pages/`
+- Shared components go in `frontend/src/components/`
+
+### Styling & Theme
+- Use MUI v5 `sx` prop for all styling (no separate CSS files unless necessary)
+- Dark glassmorphism theme — background `#070b12`, cards with `rgba(255,255,255,0.04)` bg
+- Primary accent: gold `#d4a847` | Secondary: purple `#7c4dff`
+- Border radius: 12–16px for cards, 8px for buttons
+- All cards use `backdropFilter: 'blur(12px)'` and subtle border `rgba(255,255,255,0.08)`
+- Font: Inter (loaded via index.html)
+
+### Data Fetching
+- Use TanStack React Query for all server state
+- Query key pattern: `['coins', filters]`, `['coin', id]`, `['collections']`, `['coin-stats']`
+- Mutations invalidate related queries on success
+
+### Forms
+- Use React Hook Form for all form state
+- Validation inline with `rules` prop
+
+### Supabase
+- Client in `frontend/src/lib/supabase.ts` — import `{ supabase }` from there
+- Never hardcode credentials — use env vars `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+- Images go to bucket `coin-images` in Supabase Storage
+
+### TypeScript
+- Always type function parameters and return values
+- Use `interface` for object shapes (not `type` aliases for objects)
+- Prefer `const` over `let`
+
+### Copyright
+- Include `© Meverik Studio®` in app footer
+- Do not remove existing copyright notices
+
+## What NOT to Do
+- Do not add new dependencies without checking for existing alternatives
+- Do not modify `supabase/migrations/` without understanding the full schema impact
+- Do not commit `.env` files — use `.env.example` as the template
+- Do not use `any` TypeScript type — prefer `unknown` if type is truly dynamic
+- Do not write CSS files unless MUI sx prop is insufficient
