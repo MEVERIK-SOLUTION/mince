@@ -25,6 +25,7 @@ Jděte na **GitHub → Settings → Secrets and variables → Actions → New re
 | Secret | Co to je | Kde to najít |
 |--------|----------|--------------|
 | `VERCEL_TOKEN` | Vercel přístupový token | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
+| `VERCEL_ORG_ID` | Vercel team/user ID *(volitelné – automaticky zjištěno z API)* | Vercel → Settings → General → Team ID |
 | `SUPABASE_ACCESS_TOKEN` | Supabase Management API klíč | Supabase → Account → Access tokens |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon/public JWT klíč | Supabase → Project → Settings → API → `anon public` |
 
@@ -61,7 +62,7 @@ npm run dev
 
 Workflow `.github/workflows/deploy.yml` se spustí při každém push do `main`:
 - **Build & Lint** – ověří kód (běží vždy, i na PR)
-- **Deploy** – nasadí na Vercel (jen push do `main`, vyžaduje `VERCEL_TOKEN`)
+- **Deploy** – nasadí na Vercel (jen push do `main`, vyžaduje secret `VERCEL_TOKEN`; `VERCEL_ORG_ID` je volitelný – pokud není nastaven, zjistí se automaticky přes Vercel API)
 
 Vercel také nasazuje automaticky přes GitHub integraci nezávisle na GitHub Actions.
 

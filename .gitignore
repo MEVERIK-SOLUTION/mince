@@ -12,6 +12,9 @@ dist-ssr/
 .env.local
 .env.*.local
 
+# Vercel local project files (CI uses env vars instead)
+.vercel
+
 # Logs
 *.log
 npm-debug.log*
