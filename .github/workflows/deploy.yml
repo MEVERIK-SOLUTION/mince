@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+env:
+  VERCEL_PROJECT_ID: prj_L3L3snANzop6ea36cGlhq0ZcF0MP
+  VITE_SUPABASE_URL: https://yjzsvyksjjrkupgxueua.supabase.co
+
 jobs:
   # ─── Build & Lint ─────────────────────────────────────────────
   build:
@@ -37,10 +41,13 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_URL: ${{ env.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
   # ─── Deploy to Vercel (main branch only) ──────────────────────
+  # Note: Vercel's native GitHub integration also deploys on push to main.
+  # This job provides explicit CI-controlled deployment and requires
+  # VERCEL_TOKEN to be set as a GitHub repository secret.
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
@@ -57,6 +64,18 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Resolve Vercel team (org) ID
+        id: vercel-team
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          TEAM_ID=$(curl -s \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}" \
+            | jq -r '.accountId // empty')
+          echo "team_id=$TEAM_ID" >> "$GITHUB_OUTPUT"
+          echo "Vercel team ID: $TEAM_ID"
+
       - name: Install Vercel CLI
         run: npm install --global vercel@50
 
@@ -64,19 +83,19 @@ jobs:
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: frontend
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ steps.vercel-team.outputs.team_id }}
+          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
 
       - name: Build for Vercel
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: frontend
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ steps.vercel-team.outputs.team_id }}
+          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
 
       - name: Deploy to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: frontend
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ steps.vercel-team.outputs.team_id }}
+          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}

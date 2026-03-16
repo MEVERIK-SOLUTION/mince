@@ -13,76 +13,40 @@ Webová aplikace pro evidenci a správu numismatické sbírky mincí.
 
 ## 🚀 Rychlý start – Deploy na Vercel + Supabase
 
-> **Automatický deploy** – po nastavení kroků 1–3 se každý push do větve `main` automaticky nasadí na Vercel přes GitHub Actions (`.github/workflows/deploy.yml`).
+> **Projekt je již napojen** – Vercel projekt `prj_L3L3snANzop6ea36cGlhq0ZcF0MP` je připojen k tomuto repozitáři a nasazuje větev `main` automaticky.
+> Supabase projekt `yjzsvyksjjrkupgxueua` je vytvořen. Zbývá pouze jednou nastavit 3 GitHub secrets a spustit setup workflow.
 
-### 1. Vytvořte Supabase projekt
+### Jednorázové nastavení (5 minut)
 
-1. Jděte na [supabase.com](https://supabase.com) a přihlaste se / vytvořte účet
-2. Klikněte na **New project** a vyplňte název, heslo databáze a region
-3. Po vytvoření projektu otevřete **SQL Editor** a spusťte migraci:
-   - Zkopírujte obsah [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql)
-   - Vložte do SQL Editoru a klikněte **Run**
-4. Vytvořte Storage bucket:
-   - Jděte na **Storage → New bucket**
-   - Název: `coin-images`, zaškrtněte **Public bucket**
-5. Zkopírujte klíče z **Settings → API**:
-   - `Project URL`
-   - `anon public` klíč
+#### Krok 1 – Nastavte GitHub secrets
 
-### 2. Deploy na Vercel
+Jděte na **GitHub → Settings → Secrets and variables → Actions → New repository secret** a přidejte:
 
-#### Metoda A – automaticky přes GitHub Actions (doporučeno)
+| Secret | Co to je | Kde to najít |
+|--------|----------|--------------|
+| `VERCEL_TOKEN` | Vercel přístupový token | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
+| `SUPABASE_ACCESS_TOKEN` | Supabase Management API klíč | Supabase → Account → Access tokens |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public JWT klíč | Supabase → Project → Settings → API → `anon public` |
 
-Workflow `.github/workflows/deploy.yml` automaticky nasadí aplikaci na Vercel při každém push do větve `main`.
+> `VITE_SUPABASE_URL` je veřejná hodnota a je v workflow již nastavena.
 
-**Jednorázové nastavení:**
+#### Krok 2 – Spusťte setup workflow
 
-1. Jděte na [vercel.com](https://vercel.com), přihlaste se a klikněte **New Project** → importujte repozitář `MEVERIK-SOLUTION/mince`
-2. **Root Directory**: nastavte na `frontend`, **Framework Preset**: Vite
-3. Přidejte **Environment Variables** ve Vercel dashboardu:
-   ```
-   VITE_SUPABASE_URL      = https://your-project-ref.supabase.co
-   VITE_SUPABASE_ANON_KEY = your-anon-key-here
-   ```
-4. Po prvním deploy zjistěte identifikátory projektu:
-   ```bash
-   cd frontend && vercel link
-   cat .vercel/project.json   # vypíše orgId a projectId
-   ```
-5. V GitHub repozitáři přidejte **Settings → Secrets and variables → Actions**:
-   | Secret | Hodnota |
-   |--------|---------|
-   | `VERCEL_TOKEN` | token z [vercel.com/account/tokens](https://vercel.com/account/tokens) |
-   | `VERCEL_ORG_ID` | `orgId` z kroku 4 |
-   | `VERCEL_PROJECT_ID` | `projectId` z kroku 4 |
-   | `VITE_SUPABASE_URL` | URL vašeho Supabase projektu |
-   | `VITE_SUPABASE_ANON_KEY` | anon klíč vašeho Supabase projektu |
-6. Push do `main` → workflow spustí lint, build a deploy automaticky 🎉
+1. Jděte na **GitHub → Actions → 🔧 One-time Setup (Supabase + Vercel)**
+2. Klikněte **Run workflow** → **Run workflow**
+3. Workflow automaticky:
+   - ✅ Spustí databázovou migraci (vytvoří všechny tabulky)
+   - ✅ Vytvoří Storage bucket `coin-images`
+   - ✅ Nastaví `VITE_SUPABASE_URL` a `VITE_SUPABASE_ANON_KEY` v Vercel projektu
+   - ✅ Spustí produkční redeploy na Vercel
 
-#### Metoda B – ručně přes Vercel dashboard
+#### Krok 3 – Hotovo!
 
-1. Jděte na [vercel.com](https://vercel.com) a přihlaste se GitHub účtem
-2. Klikněte **New Project** → importujte tento repozitář (`MEVERIK-SOLUTION/mince`)
-3. **Root Directory**: nastavte na `frontend`
-4. **Framework Preset**: Vite
-5. Přidejte **Environment Variables**:
-   ```
-   VITE_SUPABASE_URL    = https://your-project-ref.supabase.co
-   VITE_SUPABASE_ANON_KEY = your-anon-key-here
-   ```
-6. Klikněte **Deploy** 🎉
+Aplikace je dostupná na: **https://mince-git-main-meveriks-projects.vercel.app**
 
-#### Metoda C – přes Vercel CLI
+---
 
-```bash
-cd frontend
-npm install
-cp .env.example .env
-# Editujte .env a doplňte Supabase klíče
-vercel --prod
-```
-
-### 3. Lokální vývoj
+### Lokální vývoj
 
 ```bash
 cd frontend
@@ -93,13 +57,22 @@ npm run dev
 # Aplikace běží na http://localhost:3000
 ```
 
+### Automatické nasazení (CI/CD)
+
+Workflow `.github/workflows/deploy.yml` se spustí při každém push do `main`:
+- **Build & Lint** – ověří kód (běží vždy, i na PR)
+- **Deploy** – nasadí na Vercel (jen push do `main`, vyžaduje `VERCEL_TOKEN`)
+
+Vercel také nasazuje automaticky přes GitHub integraci nezávisle na GitHub Actions.
+
 ## 📁 Struktura projektu
 
 ```
 mince/
 ├── .github/
 │   └── workflows/
-│       └── deploy.yml              # CI/CD – lint, build, deploy na Vercel
+│       ├── deploy.yml              # CI/CD – lint, build, deploy na Vercel
+│       └── setup.yml               # Jednorázový setup Supabase + Vercel env vars
 ├── frontend/                   # React + Vite + TypeScript aplikace
 │   ├── src/
 │   │   ├── lib/supabase.ts     # Supabase klient
