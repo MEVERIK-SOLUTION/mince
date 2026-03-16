@@ -1,0 +1,123 @@
+name: 🚀 Manual Deploy to Vercel
+
+# Trigger this workflow manually from GitHub Actions UI:
+# 1. Go to Actions → "🚀 Manual Deploy to Vercel"
+# 2. Click "Run workflow"
+# 3. Paste your Vercel token in the field
+# 4. Click "Run workflow"
+#
+# Alternatively, set VERCEL_TOKEN as a GitHub repository secret and
+# leave the input field empty – the secret will be used automatically.
+
+on:
+  workflow_dispatch:
+    inputs:
+      vercel_token:
+        description: 'Vercel API token (leave empty to use VERCEL_TOKEN secret)'
+        required: false
+        type: string
+      environment:
+        description: 'Deployment target'
+        required: false
+        default: production
+        type: choice
+        options:
+          - production
+          - preview
+
+permissions:
+  contents: read
+
+env:
+  VERCEL_PROJECT_ID: prj_L3L3snANzop6ea36cGlhq0ZcF0MP
+  VITE_SUPABASE_URL: https://yjzsvyksjjrkupgxueua.supabase.co
+
+jobs:
+  deploy:
+    name: Deploy to Vercel (${{ inputs.environment || 'production' }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'production' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Resolve Vercel token
+        id: token
+        env:
+          INPUT_TOKEN: ${{ inputs.vercel_token }}
+          SECRET_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -n "$INPUT_TOKEN" ]; then
+            echo "::add-mask::$INPUT_TOKEN"
+            echo "token=$INPUT_TOKEN" >> "$GITHUB_OUTPUT"
+            echo "✅ Using token from workflow input"
+          elif [ -n "$SECRET_TOKEN" ]; then
+            echo "token=$SECRET_TOKEN" >> "$GITHUB_OUTPUT"
+            echo "✅ Using VERCEL_TOKEN secret"
+          else
+            echo "::error::No Vercel token provided. Pass it as workflow input or set VERCEL_TOKEN secret."
+            exit 1
+          fi
+
+      - name: Resolve Vercel org ID
+        id: vercel-org
+        env:
+          VERCEL_TOKEN: ${{ steps.token.outputs.token }}
+          VERCEL_ORG_ID_SECRET: ${{ secrets.VERCEL_ORG_ID }}
+        run: |
+          if [ -n "$VERCEL_ORG_ID_SECRET" ]; then
+            echo "org_id=$VERCEL_ORG_ID_SECRET" >> "$GITHUB_OUTPUT"
+            echo "Using VERCEL_ORG_ID from secret"
+          else
+            ORG_ID=$(curl -s \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}" \
+              | jq -r '.accountId // empty')
+            echo "org_id=$ORG_ID" >> "$GITHUB_OUTPUT"
+            echo "Resolved Vercel org ID: $ORG_ID"
+          fi
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        env:
+          VERCEL_TOKEN: ${{ steps.token.outputs.token }}
+          VERCEL_ORG_ID: ${{ steps.vercel-org.outputs.org_id }}
+        working-directory: frontend
+        run: vercel pull --yes --environment=${{ inputs.environment || 'production' }}
+
+      - name: Build for Vercel
+        env:
+          VERCEL_TOKEN: ${{ steps.token.outputs.token }}
+          VERCEL_ORG_ID: ${{ steps.vercel-org.outputs.org_id }}
+        working-directory: frontend
+        run: |
+          if [ "${{ inputs.environment }}" = "preview" ]; then
+            vercel build
+          else
+            vercel build --prod
+          fi
+
+      - name: Deploy to Vercel
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ steps.token.outputs.token }}
+          VERCEL_ORG_ID: ${{ steps.vercel-org.outputs.org_id }}
+        working-directory: frontend
+        run: |
+          if [ "${{ inputs.environment }}" = "preview" ]; then
+            URL=$(vercel deploy --prebuilt 2>&1 | tail -1)
+          else
+            URL=$(vercel deploy --prebuilt --prod 2>&1 | tail -1)
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo ""
+          echo "✅ Deployed to: $URL"
