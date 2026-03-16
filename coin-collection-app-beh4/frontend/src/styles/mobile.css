@@ -1,0 +1,615 @@
+/* Mobile-first responsive design for Coin Collection App */
+
+/* Base mobile styles */
+@media (max-width: 768px) {
+  /* Global mobile adjustments */
+  body {
+    font-size: 14px;
+    line-height: 1.4;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Touch-friendly interactive elements */
+  button,
+  .MuiButton-root,
+  .MuiIconButton-root,
+  .MuiFab-root {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Form inputs */
+  .MuiTextField-root,
+  .MuiFormControl-root {
+    margin-bottom: 16px;
+  }
+
+  .MuiInputBase-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px 14px;
+  }
+
+  /* Cards and containers */
+  .MuiCard-root {
+    margin-bottom: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .MuiCardContent-root {
+    padding: 16px !important;
+  }
+
+  /* Lists */
+  .MuiList-root {
+    padding: 0;
+  }
+
+  .MuiListItem-root {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  /* Tables - make them scrollable */
+  .MuiTableContainer-root {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .MuiTable-root {
+    min-width: 600px;
+  }
+
+  /* Dialogs */
+  .MuiDialog-paper {
+    margin: 16px;
+    max-height: calc(100vh - 32px);
+  }
+
+  .MuiDialogContent-root {
+    padding: 16px;
+  }
+
+  /* Tabs */
+  .MuiTabs-root {
+    min-height: 48px;
+  }
+
+  .MuiTab-root {
+    min-height: 48px;
+    min-width: 90px;
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  /* Chips */
+  .MuiChip-root {
+    height: 28px;
+    font-size: 12px;
+  }
+
+  /* Spacing utilities */
+  .mobile-padding {
+    padding: 16px;
+  }
+
+  .mobile-margin {
+    margin: 16px;
+  }
+
+  .mobile-gap {
+    gap: 8px;
+  }
+}
+
+/* Extra small devices (phones in portrait) */
+@media (max-width: 480px) {
+  /* Reduce padding and margins */
+  .MuiContainer-root {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .MuiCardContent-root {
+    padding: 12px !important;
+  }
+
+  .MuiDialogContent-root {
+    padding: 12px;
+  }
+
+  /* Smaller text */
+  .MuiTypography-h4 {
+    font-size: 1.5rem;
+  }
+
+  .MuiTypography-h5 {
+    font-size: 1.25rem;
+  }
+
+  .MuiTypography-h6 {
+    font-size: 1.1rem;
+  }
+
+  /* Compact buttons */
+  .MuiButton-root {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .MuiButton-small {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
+
+/* PWA specific styles */
+.pwa-installed {
+  /* Styles when app is installed as PWA */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.pwa-standalone {
+  /* Styles for standalone mode */
+  --status-bar-height: env(safe-area-inset-top, 20px);
+}
+
+/* Camera capture styles */
+.camera-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+.camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.camera-focus-area {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+.camera-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.3) 1px, transparent 1px);
+  background-size: 33.333% 33.333%;
+}
+
+.camera-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.camera-capture-button {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: white;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.camera-capture-button:active {
+  transform: scale(0.95);
+}
+
+/* Offline styles */
+.offline-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #f44336;
+  color: white;
+  text-align: center;
+  padding: 8px;
+  font-size: 14px;
+  z-index: 9999;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.offline-indicator.show {
+  transform: translateY(0);
+}
+
+.offline-badge {
+  position: relative;
+}
+
+.offline-badge::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: #f44336;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+/* Loading states */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Pull to refresh */
+.pull-to-refresh {
+  position: relative;
+  overflow: hidden;
+}
+
+.pull-to-refresh-indicator {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.pull-to-refresh.pulling .pull-to-refresh-indicator {
+  top: 10px;
+}
+
+/* Swipe gestures */
+.swipeable {
+  position: relative;
+  overflow: hidden;
+}
+
+.swipe-action {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.swipe-action.left {
+  left: 0;
+  background: #4caf50;
+}
+
+.swipe-action.right {
+  right: 0;
+  background: #f44336;
+}
+
+/* Bottom sheet */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  z-index: 1300;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.bottom-sheet.open {
+  transform: translateY(0);
+}
+
+.bottom-sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: #ccc;
+  border-radius: 2px;
+  margin: 12px auto 8px;
+}
+
+/* Floating action button positioning */
+.fab-container {
+  position: fixed;
+  bottom: 80px; /* Above bottom navigation */
+  right: 16px;
+  z-index: 1000;
+}
+
+.fab-container.with-bottom-nav {
+  bottom: 72px; /* Adjust for bottom navigation */
+}
+
+/* Speed dial */
+.speed-dial-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 999;
+}
+
+/* Image gallery */
+.image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  padding: 16px;
+}
+
+.image-gallery-item {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.image-gallery-item:active {
+  transform: scale(0.95);
+}
+
+.image-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Search bar */
+.mobile-search {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: white;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Filter chips */
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+/* Statistics cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 16px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1976d2;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .MuiCard-root {
+    border: 2px solid #000;
+  }
+  
+  .MuiButton-outlined {
+    border-width: 2px;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .camera-container {
+    background: #121212;
+  }
+  
+  .bottom-sheet {
+    background: #1e1e1e;
+    color: white;
+  }
+  
+  .offline-indicator {
+    background: #d32f2f;
+  }
+}
+
+/* Print styles */
+@media print {
+  .MuiFab-root,
+  .MuiSpeedDial-root,
+  .camera-controls,
+  .bottom-navigation {
+    display: none !important;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+  .camera-controls {
+    padding: 10px;
+  }
+  
+  .camera-capture-button {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .MuiAppBar-root {
+    min-height: 48px;
+  }
+  
+  .MuiToolbar-root {
+    min-height: 48px;
+  }
+}
+
+/* iOS specific adjustments */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific styles */
+  .camera-video {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+  
+  .MuiInputBase-input {
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
+  
+  /* Fix for iOS viewport units */
+  .full-height {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Android specific adjustments */
+@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: .001dpcm) {
+  /* Android Chrome specific styles */
+  .MuiButton-root {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Utility classes */
+.mobile-only {
+  display: block;
+}
+
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none;
+  }
+  
+  .desktop-only {
+    display: block;
+  }
+}
+
+.touch-friendly {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+
+.no-scroll {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+.safe-area-padding {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
