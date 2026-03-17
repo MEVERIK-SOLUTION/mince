@@ -100,6 +100,34 @@ export interface CollectionCoin {
   coin?: Coin
 }
 
+// AI typy
+
+export interface CoinIdentification {
+  name: string | null
+  country: string | null
+  year_minted: number | null
+  denomination: number | null
+  currency: string | null
+  material: string | null
+  weight_grams: number | null
+  diameter_mm: number | null
+  coin_type: string | null
+  condition: string | null
+  rarity_level: number | null
+  series: string | null
+  description: string | null
+  confidence: number
+}
+
+export interface ValueEstimate {
+  estimated_value_czk: number
+  estimated_value_eur: number
+  value_range_czk: { min: number; max: number }
+  confidence: number
+  factors: string[]
+  notes: string
+}
+
 // Konstanty pro formuláře
 export const COIN_TYPES = [
   { value: 'oběžná', label: 'Oběžná' },

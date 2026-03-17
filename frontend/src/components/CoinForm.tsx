@@ -1,10 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import {
+  Alert,
   Box,
   Button,
   Card,
   CardContent,
+  CircularProgress,
   Divider,
   Grid,
   MenuItem,
@@ -13,6 +15,7 @@ import {
 } from '@mui/material'
 import SaveIcon from '@mui/icons-material/Save'
 import CancelIcon from '@mui/icons-material/Cancel'
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import type { Coin, CoinFormData } from '../types/coin'
 import {
   COIN_TYPES,
@@ -22,6 +25,7 @@ import {
   MATERIALS,
   COUNTRIES,
 } from '../types/coin'
+import { identifyCoin, fileToBase64 } from '../services/groqService'
 
 interface CoinFormProps {
   coin?: Coin
@@ -31,7 +35,11 @@ interface CoinFormProps {
 }
 
 export default function CoinForm({ coin, onSubmit, onCancel, isLoading }: CoinFormProps) {
-  const { control, handleSubmit, formState: { errors } } = useForm<CoinFormData>({
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState('')
+  const [aiSuccess, setAiSuccess] = useState('')
+
+  const { control, handleSubmit, formState: { errors }, reset, getValues } = useForm<CoinFormData>({
     defaultValues: {
       name: coin?.name ?? '',
       country: coin?.country ?? '',
@@ -60,6 +68,45 @@ export default function CoinForm({ coin, onSubmit, onCancel, isLoading }: CoinFo
   const num = (val: string | number | undefined) =>
     val === '' || val === undefined ? undefined : Number(val)
 
+  const handleAiIdentify = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 4 * 1024 * 1024) {
+      setAiError('Obrázek je příliš velký (max 4 MB)')
+      return
+    }
+    setAiLoading(true)
+    setAiError('')
+    setAiSuccess('')
+    try {
+      const base64 = await fileToBase64(file)
+      const result = await identifyCoin(base64)
+      const current = getValues()
+      reset({
+        ...current,
+        name: result.name ?? current.name,
+        country: result.country && COUNTRIES.includes(result.country as typeof COUNTRIES[number]) ? result.country : current.country,
+        year_minted: result.year_minted ?? current.year_minted,
+        denomination: result.denomination ?? current.denomination,
+        currency: result.currency ?? current.currency,
+        material: result.material && MATERIALS.includes(result.material as typeof MATERIALS[number]) ? result.material : current.material,
+        weight_grams: result.weight_grams ?? current.weight_grams,
+        diameter_mm: result.diameter_mm ?? current.diameter_mm,
+        coin_type: result.coin_type ?? current.coin_type,
+        condition: result.condition ?? current.condition,
+        rarity_level: result.rarity_level ?? current.rarity_level,
+        series: result.series ?? current.series,
+        description: result.description ?? current.description,
+      })
+      setAiSuccess(`Identifikováno s jistotou ${Math.round((result.confidence ?? 0) * 100)} %`)
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Chyba AI identifikace')
+    } finally {
+      setAiLoading(false)
+      e.target.value = ''
+    }
+  }
+
   const handleFormSubmit = async (raw: CoinFormData) => {
     const data: CoinFormData = {
       ...raw,
@@ -86,6 +133,24 @@ export default function CoinForm({ coin, onSubmit, onCancel, isLoading }: CoinFo
     <Card>
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
+
+          {/* AI Identification */}
+          <Box sx={{ mb: 3, p: 2, borderRadius: 2, background: 'linear-gradient(135deg, rgba(124,77,255,0.08), rgba(212,168,71,0.08))', border: '1px solid rgba(124,77,255,0.2)' }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>🤖 AI Identifikace mince</Typography>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+              <label htmlFor="ai-identify-input">
+                <input id="ai-identify-input" type="file" accept="image/*" hidden onChange={handleAiIdentify} disabled={aiLoading} />
+                <Button variant="outlined" component="span" startIcon={aiLoading ? <CircularProgress size={18} /> : <AutoFixHighIcon />} disabled={aiLoading}>
+                  {aiLoading ? 'Analyzuji…' : 'Identifikovat z fotky'}
+                </Button>
+              </label>
+              <Typography variant="caption" color="text.secondary">
+                Nahrajte fotografii mince – AI vyplní formulář
+              </Typography>
+            </Box>
+            {aiError && <Alert severity="error" sx={{ mt: 1 }} onClose={() => setAiError('')}>{aiError}</Alert>}
+            {aiSuccess && <Alert severity="success" sx={{ mt: 1 }} onClose={() => setAiSuccess('')}>{aiSuccess}</Alert>}
+          </Box>
 
           {section('Základní informace')}
           <Grid container spacing={2}>

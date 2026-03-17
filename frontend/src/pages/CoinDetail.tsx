@@ -28,7 +28,10 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import StarIcon from '@mui/icons-material/Star'
 import StarBorderIcon from '@mui/icons-material/StarBorder'
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import { coinService, imageService } from '../services/coinService'
+import { describeCoin, estimateValue } from '../services/groqService'
+import type { ValueEstimate } from '../types/coin'
 
 function DetailRow({ label, value }: { label: string; value?: string | number | null }) {
   if (value == null || value === '') return null
@@ -48,6 +51,11 @@ export default function CoinDetail() {
   const [deleteDialog, setDeleteDialog] = useState(false)
   const [snack, setSnack] = useState('')
   const [lightboxImg, setLightboxImg] = useState<string | null>(null)
+  const [aiDescription, setAiDescription] = useState<string | null>(null)
+  const [aiDescLoading, setAiDescLoading] = useState(false)
+  const [aiValue, setAiValue] = useState<ValueEstimate | null>(null)
+  const [aiValueLoading, setAiValueLoading] = useState(false)
+  const [aiError, setAiError] = useState('')
 
   const { data: coin, isLoading, error } = useQuery({
     queryKey: ['coin', id],
@@ -90,6 +98,43 @@ export default function CoinDetail() {
       setSnack('Obrázek byl nahrán')
     } catch {
       setSnack('Chyba při nahrávání obrázku')
+    }
+  }
+
+  const handleAiDescribe = async () => {
+    if (!coin) return
+    setAiDescLoading(true)
+    setAiError('')
+    try {
+      const text = await describeCoin({
+        name: coin.name, country: coin.country, year_minted: coin.year_minted,
+        denomination: coin.denomination, currency: coin.currency, material: coin.material,
+        coin_type: coin.coin_type, condition: coin.condition, series: coin.series,
+      })
+      setAiDescription(text)
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Chyba AI popisu')
+    } finally {
+      setAiDescLoading(false)
+    }
+  }
+
+  const handleAiValue = async () => {
+    if (!coin) return
+    setAiValueLoading(true)
+    setAiError('')
+    try {
+      const val = await estimateValue({
+        name: coin.name, country: coin.country, year_minted: coin.year_minted,
+        denomination: coin.denomination, currency: coin.currency, material: coin.material,
+        coin_type: coin.coin_type, condition: coin.condition, rarity_level: coin.rarity_level,
+        series: coin.series,
+      })
+      setAiValue(val)
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Chyba AI ocenění')
+    } finally {
+      setAiValueLoading(false)
     }
   }
 
@@ -189,6 +234,69 @@ export default function CoinDetail() {
                 <Box sx={{ mt: 2 }}>
                   <Typography color="text.secondary" gutterBottom>Popis:</Typography>
                   <Typography>{coin.description}</Typography>
+                </Box>
+              )}
+
+              {/* AI Section */}
+              <Divider sx={{ my: 2 }} />
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={aiDescLoading ? <CircularProgress size={16} /> : <AutoFixHighIcon />}
+                  onClick={handleAiDescribe}
+                  disabled={aiDescLoading}
+                >
+                  {aiDescLoading ? 'Generuji…' : '✨ AI popis'}
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={aiValueLoading ? <CircularProgress size={16} /> : <AutoFixHighIcon />}
+                  onClick={handleAiValue}
+                  disabled={aiValueLoading}
+                >
+                  {aiValueLoading ? 'Odhaduji…' : '💰 Odhad hodnoty'}
+                </Button>
+              </Box>
+
+              {aiError && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setAiError('')}>{aiError}</Alert>}
+
+              {aiDescription && (
+                <Box sx={{ p: 2, borderRadius: 2, background: 'linear-gradient(135deg, rgba(124,77,255,0.06), rgba(212,168,71,0.06))', border: '1px solid rgba(124,77,255,0.15)', mb: 2 }}>
+                  <Typography variant="subtitle2" color="primary" gutterBottom>🤖 AI Popis</Typography>
+                  <Typography variant="body2">{aiDescription}</Typography>
+                </Box>
+              )}
+
+              {aiValue && (
+                <Box sx={{ p: 2, borderRadius: 2, background: 'linear-gradient(135deg, rgba(212,168,71,0.08), rgba(124,77,255,0.04))', border: '1px solid rgba(212,168,71,0.2)' }}>
+                  <Typography variant="subtitle2" color="primary" gutterBottom>💰 AI Odhad hodnoty</Typography>
+                  <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 1 }}>
+                    <Box>
+                      <Typography variant="h5" fontWeight="bold" color="warning.main">
+                        {aiValue.estimated_value_czk?.toLocaleString('cs-CZ')} Kč
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        ({aiValue.estimated_value_eur?.toLocaleString('cs-CZ')} €)
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">Rozmezí:</Typography>
+                      <Typography variant="body2">
+                        {aiValue.value_range_czk?.min?.toLocaleString('cs-CZ')} – {aiValue.value_range_czk?.max?.toLocaleString('cs-CZ')} Kč
+                      </Typography>
+                    </Box>
+                  </Box>
+                  {aiValue.factors?.length > 0 && (
+                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 1 }}>
+                      {aiValue.factors.map((f, i) => <Chip key={i} label={f} size="small" variant="outlined" />)}
+                    </Box>
+                  )}
+                  {aiValue.notes && <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>{aiValue.notes}</Typography>}
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    Jistota: {Math.round((aiValue.confidence ?? 0) * 100)} % · Pouze orientační odhad
+                  </Typography>
                 </Box>
               )}
             </Card>
