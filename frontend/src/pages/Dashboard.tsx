@@ -18,6 +18,7 @@ import PublicIcon from '@mui/icons-material/Public'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import DiamondIcon from '@mui/icons-material/Diamond'
 import { coinService } from '../services/coinService'
+import { fetchMetals } from '../services/metalsService'
 
 interface StatCardProps {
   label: string
@@ -142,6 +143,12 @@ export default function Dashboard() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['coin-stats'],
     queryFn: () => coinService.getStats(),
+  })
+  const { data: metals } = useQuery({
+    queryKey: ['metals-dashboard'],
+    queryFn: fetchMetals,
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
   })
 
   const statCards = [
@@ -294,6 +301,61 @@ export default function Dashboard() {
                 </Card>
               </Grid>
             ))}
+          </Grid>
+        </Box>
+      )}
+
+      {/* Precious metals mini-widget */}
+      {metals && metals.metals.length > 0 && (
+        <Box sx={{ mt: 4 }}>
+          <Typography
+            variant="overline"
+            sx={{
+              color: 'rgba(232,234,246,0.3)',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              mb: 1.5,
+              display: 'block',
+            }}
+          >
+            Drahé kovy
+          </Typography>
+          <Grid container spacing={2}>
+            {metals.metals.slice(0, 5).map((m) => {
+              const isUp = m.change_24h >= 0
+              return (
+                <Grid item xs={6} sm={4} md key={m.symbol}>
+                  <Card
+                    onClick={() => navigate('/metals')}
+                    sx={{
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      '&:hover': { transform: 'translateY(-2px)', borderColor: 'rgba(212,168,71,0.25)' },
+                    }}
+                  >
+                    <CardContent sx={{ textAlign: 'center', p: '16px !important' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#d4a847', mb: 0.25, fontSize: '0.9rem' }}>
+                        {m.price_czk.toLocaleString('cs-CZ')} Kč
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'rgba(232,234,246,0.5)', fontSize: '0.72rem' }} noWrap>
+                        {m.name}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          color: isUp ? '#00c896' : '#ef5350',
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {isUp ? '+' : ''}{m.change_24h.toFixed(2)}%
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )
+            })}
           </Grid>
         </Box>
       )}

@@ -21,6 +21,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard'
 import ViewListIcon from '@mui/icons-material/ViewList'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
 import CollectionsBookmarkIcon from '@mui/icons-material/CollectionsBookmark'
+import DiamondIcon from '@mui/icons-material/Diamond'
 
 import Dashboard from './pages/Dashboard'
 import CoinList from './pages/CoinList'
@@ -28,6 +29,7 @@ import CoinDetail from './pages/CoinDetail'
 import AddCoin from './pages/AddCoin'
 import EditCoin from './pages/EditCoin'
 import Collections from './pages/Collections'
+import PreciousMetals from './pages/PreciousMetals'
 
 const DRAWER_WIDTH = 240
 
@@ -36,6 +38,7 @@ const navItems = [
   { label: 'Katalog mincí', path: '/coins', icon: <ViewListIcon fontSize="small" /> },
   { label: 'Přidat minci', path: '/coins/new', icon: <AddCircleIcon fontSize="small" /> },
   { label: 'Kolekce', path: '/collections', icon: <CollectionsBookmarkIcon fontSize="small" /> },
+  { label: 'Drahé kovy', path: '/metals', icon: <DiamondIcon fontSize="small" /> },
 ]
 
 export default function App() {
@@ -292,6 +295,7 @@ export default function App() {
             <Route path="/coins/:id" element={<CoinDetail />} />
             <Route path="/coins/:id/edit" element={<EditCoin />} />
             <Route path="/collections" element={<Collections />} />
+            <Route path="/metals" element={<PreciousMetals />} />
           </Routes>
         </Container>
       </Box>
