@@ -25,18 +25,22 @@ interface MetalsResponse {
 let cache: { data: MetalsResponse; ts: number } | null = null
 const CACHE_TTL = 10 * 60 * 1000 // 10 min
 
-async function fetchGoldPrice(): Promise<{ xau: number; xag: number }> {
-  // Use CoinGecko's free commodity-like endpoint
-  const res = await fetch(
-    'https://api.coingecko.com/api/v3/simple/price?ids=tether-gold,silver&vs_currencies=usd',
-    { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(8000) }
-  )
-  if (!res.ok) throw new Error(`CoinGecko ${res.status}`)
-  const data = await res.json()
-  return {
-    xau: data['tether-gold']?.usd ?? 2650,
-    xag: data['silver']?.usd ?? 31.5,
+async function fetchSpotPrices(): Promise<Record<string, number>> {
+  // metals.live - free, no API key, returns live spot prices
+  const res = await fetch('https://api.metals.live/v1/spot', {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(8000),
+  })
+  if (!res.ok) throw new Error(`metals.live ${res.status}`)
+  const data: Array<Record<string, number>> = await res.json()
+  // Response is [{gold: 2650}, {silver: 31.5}, {platinum: 980}, ...]
+  const prices: Record<string, number> = {}
+  for (const entry of data) {
+    for (const [key, val] of Object.entries(entry)) {
+      prices[key] = val
+    }
   }
+  return prices
 }
 
 async function fetchRates(): Promise<{ eur: number; czk: number }> {
@@ -63,14 +67,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const [prices, rates] = await Promise.all([fetchGoldPrice(), fetchRates()])
+    const [prices, rates] = await Promise.all([fetchSpotPrices(), fetchRates()])
 
-    // Approximate other metals from gold ratio (typical market ratios)
-    const xau = prices.xau
-    const xag = prices.xag
-    const xpt = xau * 0.37 // platinum ~37% of gold
-    const xpd = xau * 0.36 // palladium ~36% of gold
-    const xrh = xau * 1.85 // rhodium ~185% of gold
+    const xau = prices.gold ?? 2650
+    const xag = prices.silver ?? 31.5
+    const xpt = prices.platinum ?? 980
+    const xpd = prices.palladium ?? 955
+    const xrh = prices.rhodium ?? 4900
 
     const metals: MetalPrice[] = [
       {
