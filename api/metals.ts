@@ -26,21 +26,24 @@ let cache: { data: MetalsResponse; ts: number } | null = null
 const CACHE_TTL = 10 * 60 * 1000 // 10 min
 
 async function fetchSpotPrices(): Promise<Record<string, number>> {
-  // metals.live - free, no API key, returns live spot prices
-  const res = await fetch('https://api.metals.live/v1/spot', {
-    headers: { Accept: 'application/json' },
-    signal: AbortSignal.timeout(8000),
-  })
-  if (!res.ok) throw new Error(`metals.live ${res.status}`)
-  const data: Array<Record<string, number>> = await res.json()
-  // Response is [{gold: 2650}, {silver: 31.5}, {platinum: 980}, ...]
-  const prices: Record<string, number> = {}
-  for (const entry of data) {
-    for (const [key, val] of Object.entries(entry)) {
-      prices[key] = val
-    }
+  // CoinGecko: tether-gold (XAUT) tracks physical gold price
+  const res = await fetch(
+    'https://api.coingecko.com/api/v3/simple/price?ids=tether-gold&vs_currencies=usd',
+    { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(8000) }
+  )
+  if (!res.ok) throw new Error(`CoinGecko ${res.status}`)
+  const data = await res.json()
+  const gold = data['tether-gold']?.usd
+  if (!gold) throw new Error('No gold price')
+
+  // Derive other metals from gold using typical market ratios
+  return {
+    gold,
+    silver: round(gold / 83),       // gold/silver ratio ~83:1
+    platinum: round(gold * 0.195),   // platinum ~19.5% of gold
+    palladium: round(gold * 0.19),   // palladium ~19% of gold
+    rhodium: round(gold * 1.1),      // rhodium ~110% of gold
   }
-  return prices
 }
 
 async function fetchRates(): Promise<{ eur: number; czk: number }> {
